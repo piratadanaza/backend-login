@@ -1,11 +1,19 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-// Cria a conexão com o banco de dados PostgreSQL usando a variável DATABASE_URL
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: {
-    rejectUnauthorized: false // Habilita SSL (necessário no Railway)
+    rejectUnauthorized: false
+  }
+});
+
+// Teste de conexão com o banco
+pool.query('SELECT NOW()', (err) => {
+  if (err) {
+    console.error('Erro na conexão com o PostgreSQL:', err);
+  } else {
+    console.log('Conexão com PostgreSQL estabelecida');
   }
 });
 
