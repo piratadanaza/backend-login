@@ -3,17 +3,15 @@ require('dotenv').config();
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
-  ssl: {
-    rejectUnauthorized: false
-  }
+  ssl: { rejectUnauthorized: false }
 });
 
-// Teste de conexão com o banco
+// Teste de conexão
 pool.query('SELECT NOW()', (err) => {
   if (err) {
-    console.error('Erro na conexão com o PostgreSQL:', err);
+    console.error('❌ Erro na conexão com PostgreSQL:', err);
   } else {
-    console.log('Conexão com PostgreSQL estabelecida');
+    console.log('✅ Conectado ao PostgreSQL');
   }
 });
 

