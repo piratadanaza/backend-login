@@ -1,7 +1,7 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const db = require('./db');
+const db = require('./db'); // Importa a configuração do banco de dados
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -12,10 +12,13 @@ app.use(express.json());
 app.post('/login', async (req, res) => {
   const { email, password } = req.body;
 
-  if (!email || !password)
+  // Verifica se os campos de email e senha foram preenchidos
+  if (!email || !password) {
     return res.status(400).json({ error: 'Campos obrigatórios' });
+  }
 
   try {
+    // Insere o usuário no banco de dados
     await db.query('INSERT INTO users (email, password) VALUES ($1, $2)', [email, password]);
     res.status(201).json({ message: 'Usuário salvo com sucesso!' });
   } catch (error) {
