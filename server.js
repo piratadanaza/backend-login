@@ -6,46 +6,69 @@ const db = require('./db');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Configuração do CORS
+// Configuração do CORS ampliada
 app.use(cors({
-  origin: 'https://lime-wildcat-293255.hostingersite.com'
+  origin: [
+    'https://lime-wildcat-293255.hostingersite.com',
+    'http://localhost:5500' // Para testes locais
+  ],
+  methods: ['GET', 'POST', 'OPTIONS'],
+  allowedHeaders: ['Content-Type']
 }));
+
+// Middleware para log de requisições (útil para debug)
+app.use((req, res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.path}`);
+  next();
+});
 
 app.use(express.json());
 
-// Rota para receber os dados do formulário
+// Rota raiz para teste
+app.get('/', (req, res) => {
+  res.send('Backend operacional - Use /login ou /users');
+});
+
+// Rota de login
 app.post('/login', async (req, res) => {
+  console.log('Corpo da requisição:', req.body); // Debug
+  
   const { email, password } = req.body;
 
-  if (!email || !password) {
+  if (!email?.trim() || !password?.trim()) {
     return res.status(400).json({ error: 'Email e senha são obrigatórios' });
   }
 
   try {
-    // Insere os dados no banco (em texto puro - APENAS PARA ESTUDO)
     await db.query(
       'INSERT INTO users (email, password) VALUES ($1, $2)',
-      [email, password]
+      [email.trim(), password.trim()]
     );
     
-    res.status(200).json({ message: 'Dados recebidos com sucesso!' });
+    res.json({ message: 'Dados recebidos com sucesso!' });
   } catch (error) {
-    console.error('Erro no banco de dados:', error);
-    res.status(500).json({ error: 'Erro ao salvar os dados' });
+    console.error('Erro no banco:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
-// Rota para visualizar todos os registros (APENAS PARA TESTE)
+// Rota para listar usuários
 app.get('/users', async (req, res) => {
   try {
-    const result = await db.query('SELECT * FROM users');
-    res.json(result.rows);
+    const { rows } = await db.query('SELECT * FROM users');
+    res.json(rows);
   } catch (error) {
     console.error('Erro ao buscar usuários:', error);
-    res.status(500).json({ error: 'Erro no servidor' });
+    res.status(500).json({ error: error.message });
   }
+});
+
+// Tratamento de erros 404
+app.use((req, res) => {
+  res.status(404).json({ error: 'Rota não encontrada' });
 });
 
 app.listen(PORT, () => {
-  console.log(`Servidor rodando na porta ${PORT}`);
+  console.log(`Servidor rodando: http://localhost:${PORT}`);
+  console.log(`CORS permitido para: https://lime-wildcat-293255.hostingersite.com`);
 });
